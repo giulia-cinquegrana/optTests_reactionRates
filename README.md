@@ -1,6 +1,6 @@
 # optTests_reactionRates
 
-ractive decay chains - batch solver. currently python. 
+batch solver for r-active decay chains, c python. 
 
 -independent A->B->C chains (e.g., Ni56->Co56->Fe56 and Ni57->Co57->Fe57)
 
@@ -11,7 +11,17 @@ ractive decay chains - batch solver. currently python.
     dY_B = lambda_A * Y_A - lambda_B * Y_B
     dY_C = lambda_B * Y_B
 
--adaptive dt (currently euler).
+-adaptive dt (c euler).
     -per-step fractional-change control 
-    -e.g., define the max change for a given species per timestep you want to resolve. 
+    -e.g., define max change for a given species per timestep to resolve. 
+
+to do:
+
+-numba. 
+    p across rows of chains x particles. 
+-c comparison.
+-final: 
+
+    -
+
 

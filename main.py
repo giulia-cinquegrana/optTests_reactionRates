@@ -5,15 +5,6 @@ class reaction_rates:
 
     def __init__(self, chains, hl, Y_init):
 
-        # tau = {'ni56': 5.251e5,
-        # 'co56': 6.672e6,
-        # 'ni57': 1.28e5,
-        # 'co57': 2.35e7,
-        # 'ti44': 1.86e9,
-        # 'sc44': 1.43e4
-        # }
-
-        # self.Y = np.array([1.0, 0.0, 0.0])
         self.t = 0.0
         self.chains = list(chains)
         self.idx = {label:i for i, label in enumerate(self.chains)}

@@ -3,6 +3,12 @@ import matplotlib.pyplot as plt
 
 class reaction_rates: 
 
+    """
+    tracks abundances for multi-species decay using specified 
+    half-lives and initial abundances. integrates forward in time with 
+    optional adaptive step size control.
+    """
+
     def __init__(self, chains, hl, Y_init):
 
         self.t = 0.0
@@ -15,17 +21,14 @@ class reaction_rates:
 
     def calc_decay(self):
 
-        '''
-        simple radioactive decay, A --> B --> C
-
-        Y: [Y_A, Y_B, Y_C], abundance (number fraction). 
-        hl: [tau_A, tau_B]
-        rf: reaction flux
-        '''
+        """
+        Compute abundance change rates for a two-step decay chain 
+        (A -> B -> C) based on current abundances and half-lives.
+        """
 
         decay_const  = np.log(2) / self.hl
 
-        rf1 = decay_const[:,0]* self.Y[:,0]   
+        rf1 = decay_const[:,0]* self.Y[:,0]   #reaction flux
         rf2 = decay_const[:,1]* self.Y[:,1]
 
         dY = np.zeros_like(self.Y)
@@ -37,12 +40,15 @@ class reaction_rates:
         return dY
     
     def step(self, dt, adaptive=True, tol_abs=1e-18, tol_rel=0.02, Y_gate=1e-12):
-        '''
-        travel one step
-        euler, p=1
-        atol: pick smallest abundance change you care about, e.g. 10^-20, 10^-18.
-        s = safety factor
-        '''
+        """
+        advance simulation by one euler step, with optional adaptive time-stepping.
+
+        calculates abundance changes, estimates fractional errors relative to 
+        current values (ignoring species below Y_gate, i.e., those not participating), 
+        and adjusts dt if adaptive. 
+        
+        returns the actual step taken, suggested next dt, and maximum relative error.
+        """
 
         p = 1
         s = 0.9
@@ -80,11 +86,15 @@ class reaction_rates:
         
     def run(self, t_max, n_max, dt_init=None, dt_out=None):
 
-        '''
-        t_max = max simulation time
-        n_max = max number of steps
-        dt_init = initial time step
-        '''
+        """
+        integrate decay system to a max time or step count boundary.
+
+        uses `step()` with adaptive time-stepping, storing abundances at regular 
+        output intervals. 
+        
+        returns arrays of output times and corresponding 
+        abundance snapshots.
+        """
 
         n = 0 # step number
         smol_n = 1e-12
@@ -131,36 +141,37 @@ class reaction_rates:
 if __name__ == "__main__":
 
     chains = ["56", "57"]
-    idx = {c:i for i,c in enumerate(chains)}
-    N = len(chains)
+    hl = np.array([
+        [5.251e5, 6.672e6], # Ni56 -> Co56 -> Fe56
+        [1.28e5,  2.35e7] # Ni57 -> Co57 -> Fe57
+    ], dtype=float)
 
-    hl = np.empty((N,2), dtype=float)
-    hl[idx["56"]] = [5.251e5, 6.672e6]
-    hl[idx["57"]] = [1.28e5,  2.35e7]
+    # initial abunds for each chain
+    # this bit needs to be updated
+    Y0 = np.zeros((len(chains), 3), dtype=float)
+    Y0[0, 0] = 1.0 # 56Ni starts at 1.0
+    Y0[1, 0] = 0.03 * Y0[0, 0] # 57Ni starts at fraction of 56Ni
 
-    Y0 = np.zeros((N,3), dtype=float)
-    Y0[idx["56"],0] = 1.0
-    R0 = 0.03
-    Y0[idx["57"],0] = R0 * Y0[idx["56"],0]
-
+    # run 
     sim = reaction_rates(chains, hl, Y0)
-
-    t_max = 5.0 * hl[idx["57"],1]
+    t_max = 5.0 * hl[1, 1] # 5xhl of Co57
     T, Ysnap = sim.run(t_max, n_max=50_000)
-
-    k56, k57 = idx["56"], idx["57"]
+    # 
     t_days = T / 86400.0
-    Y56 = Ysnap[:, k56, :]
-    Y57 = Ysnap[:, k57, :]
+    Y56, Y57 = Ysnap[:, 0, :], Ysnap[:, 1, :]
+    ratio = Y57[:, 2] / np.maximum(Y56[:, 2], 1e-30)
 
-    ratio = Y57[:,2] / np.maximum(Y56[:,2], 1e-30)
-
-    fig, ax = plt.subplots(1,2, figsize=(10,4))
-    ax[0].plot(t_days, Y56[:,0], label="56Ni")
-    ax[0].plot(t_days, Y56[:,1], label="56Co")
-    ax[0].plot(t_days, Y56[:,2], label="56Fe")
-    ax[0].set_xlabel("time [days]"); ax[0].set_ylabel("Y (56-chain)"); ax[0].legend()
+    fig, ax = plt.subplots(1, 2, figsize=(10, 4))
+    ax[0].plot(t_days, Y56[:, 0], label="56Ni")
+    ax[0].plot(t_days, Y56[:, 1], label="56Co")
+    ax[0].plot(t_days, Y56[:, 2], label="56Fe")
+    ax[0].set_xlabel("time [days]")
+    ax[0].set_ylabel("Y (56-chain)")
+    ax[0].legend()
 
     ax[1].plot(t_days, ratio)
-    ax[1].set_xlabel("time [days]"); ax[1].set_ylabel("57Fe / 56Fe")
-    fig.tight_layout(); plt.show()
+    ax[1].set_xlabel("time [days]")
+    ax[1].set_ylabel("57Fe / 56Fe")
+
+    fig.tight_layout()
+    plt.show()

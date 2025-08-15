@@ -14,7 +14,7 @@ Preset parse_preset(const std::string& s){
     return UNKNOWN;
 }
 
-std::array<std::array<double, 3>, 2> calc_decay(Preset preset){
+std::array<std::array<double, 3>, 2> decay(Preset preset){
 
     std::array<std::array<double, 2>, 2> hl;
     std::array<std::array<double, 3>, 2> Y;
@@ -63,6 +63,60 @@ std::array<std::array<double, 3>, 2> calc_decay(Preset preset){
 
 }
 
+double step(){
+
+    double dt, dt_next, error_max, s, tol_abs, tol_rel, Y_gate;
+    int p;
+
+    p = 1; // euler
+    s = 0.9; // safety
+    tol_abs = 1e-18; 
+    tol_rel = 0.02;
+    Y_gate = 1e-12; // minimum abundance for participating
+
+
+
+
+
+
+
+    return dt, dt_next, error_max;
+
+}
+
+    // def step(self, dt, adaptive=True, tol_abs=1e-18, tol_rel=0.02, Y_gate=1e-12):
+        
+    //     while True:
+
+    //         dY = self.calc_decay()
+
+    //         Y_trial = self.Y + dt * dY
+
+    //         # fractional change per species, referenced to current amount
+    //         frac = np.abs(dt * dY) / np.maximum(self.Y, Y_gate)
+    //         # only species that currently exist control step
+    //         active = self.Y > Y_gate
+    //         error_max = float(frac[active].max()) if np.any(active) else float(frac.max())
+
+    //         if adaptive and (error_max > tol_rel):
+    //             factor = max(0.2, min(2.0, s * (tol_rel / error_max)))  # shrink and retry
+    //             dt *= factor
+    //             continue
+
+    //         # accept when error_max < 1
+    //         self.Y = np.clip(Y_trial, 0.0, None)
+    //         self.t += dt
+
+    //         if adaptive:
+    //             # if last step easy (small error_max), grow dt.
+    //             # or if large error_max, shrink dt.
+    //             growth = min(2.0, max(0.5, s * (tol_rel / max(error_max, 1e-30))))
+    //             dt_next = dt * growth
+    //         else:
+    //             dt_next = dt
+
+    //         return dt, dt_next, error_max
+
 int main(int argc, char** argv){
 
     MPI_Init(&argc, &argv);
@@ -84,7 +138,7 @@ int main(int argc, char** argv){
 
     try {
 
-        auto decay_consts = calc_decay(static_cast<Preset>(preset_id));
+        auto decay_consts = decay(static_cast<Preset>(preset_id));
 
         for (size_t i = 0; i < decay_consts.size(); ++i) {
             for (size_t j = 0; j < decay_consts[i].size(); ++j) {

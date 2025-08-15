@@ -3,6 +3,7 @@
 #include <cmath>
 #include <array>
 #include <stdexcept>
+#include <string> 
 
 const double LN2 = std::log(2.0);
 
@@ -13,12 +14,14 @@ Preset parse_preset(const std::string& s){
     return UNKNOWN;
 }
 
-std::array<std::array<double, 2>, 2> calc_decay(Preset preset){
+std::array<std::array<double, 3>, 2> calc_decay(Preset preset){
 
     std::array<std::array<double, 2>, 2> hl;
     std::array<std::array<double, 3>, 2> Y;
     std::array<std::array<double, 3>, 2> dY;
     std::array<std::array<double, 2>, 2> decay_const;
+    double rf1;
+    double rf2;
 
     switch (preset) {
         case SNeII:
@@ -41,40 +44,24 @@ std::array<std::array<double, 2>, 2> calc_decay(Preset preset){
             throw std::runtime_error("only SNeII available now, come back later");
     }
 
-    for (size_t i = 0; i < 2; ++i){
-        for (size_t j = 0; j < 2; ++j){
-
-            decay_const[i][j] = LN2 / hl[i][j];
+    for (std::size_t i = 0; i < hl.size(); ++i) {
+        for (std::size_t k = 0; k < hl[i].size(); ++k) {
+            decay_const[i][k] = LN2 / hl[i][k];
         }
     }
 
-    // for (double val : decay_const[0]) {
-    //     std::cout << val << " ";
-    // }
-    // std::cout << "\n";
-    // return decay_const;
+    for (std::size_t i = 0; i < Y.size(); ++i) {
+        const double rf1 = decay_const[i][0] * Y[i][0]; 
+        const double rf2 = decay_const[i][1] * Y[i][1]; 
 
-    for (std::size_t j = 0; j < Y[0].size(); ++j) {
-
-        Y[0][j] * decay_const[0][j] ;
-
+        dY[i][0] = -rf1;          
+        dY[i][1] =  rf1 - rf2;    
+        dY[i][2] =  rf2;         
     }
 
-    return decay_const;
+    return dY;
+
 }
-
-            // reaction flux
-
-        // rf1 = decay_const[:,0]* self.Y[:,0]   
-        // rf2 = decay_const[:,1]* self.Y[:,1]
-
-        // dY = np.zeros_like(self.Y)
-
-        // dY[:,0] = -rf1
-        // dY[:,1] = rf1 - rf2
-        // dY[:,2] = rf2
-
-        // return dY
 
 int main(int argc, char** argv){
 
